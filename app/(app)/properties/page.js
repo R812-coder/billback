@@ -175,44 +175,59 @@ export default function Properties() {
       </div>
 
       {showForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setShowForm(false)}>
-          <div className="card" style={{ width: '100%', maxWidth: 560, maxHeight: '85vh', overflow: 'auto', animation: 'scaleIn 0.15s ease' }} onClick={e => e.stopPropagation()}>
-            <div className="card-header"><h2 style={{ fontSize: 18, fontWeight: 700 }}>{editingProp ? 'Edit' : 'Add'} Property</h2></div>
-            <form onSubmit={saveProp} className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div><label className="label">Property Name *</label><input className="input" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g., Oakwood Apartments" /></div>
-              <div><label className="label">Address</label><input className="input" value={form.address} onChange={e => setForm({...form, address: e.target.value})} placeholder="123 Main St" /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12 }}>
-                <div><label className="label">City</label><input className="input" value={form.city} onChange={e => setForm({...form, city: e.target.value})} /></div>
-                <div><label className="label">State</label><input className="input" value={form.state} onChange={e => setForm({...form, state: e.target.value})} maxLength={2} /></div>
-                <div><label className="label">ZIP</label><input className="input" value={form.zip} onChange={e => setForm({...form, zip: e.target.value})} /></div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div><label className="label">Property Type</label>
-                  <select className="input" value={form.property_type} onChange={e => setForm({...form, property_type: e.target.value})}>
-                    <option value="residential">Residential</option><option value="commercial">Commercial</option><option value="mixed">Mixed Use</option>
-                  </select></div>
-                <div><label className="label">Allocation Method</label>
-                  <select className="input" value={form.default_allocation_method} onChange={e => setForm({...form, default_allocation_method: e.target.value})}>
-                    {Object.entries(ALLOCATION_METHODS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                  </select></div>
-              </div>
-              {form.default_allocation_method === 'weighted' && (
-                <div><label className="label">Sq Ft Weight: {form.sqft_weight}% / Occupancy: {100 - form.sqft_weight}%</label>
-                  <input type="range" min={10} max={90} value={form.sqft_weight} onChange={e => setForm({...form, sqft_weight: parseInt(e.target.value)})} style={{ width: '100%', accentColor: '#1a1a2e' }} /></div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div><label className="label">Total Building Sq Ft</label><input className="input input-mono" type="number" value={form.total_sqft} onChange={e => setForm({...form, total_sqft: e.target.value})} /></div>
-                <div><label className="label">Common Area Sq Ft</label><input className="input input-mono" type="number" value={form.common_area_sqft} onChange={e => setForm({...form, common_area_sqft: e.target.value})} /></div>
-              </div>
-              <div><label className="label">Notes</label><textarea className="input" rows={2} value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} /></div>
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : editingProp ? 'Save Changes' : 'Add Property'}</button>
-              </div>
-            </form>
+        <Modal onClose={() => setShowForm(false)}>
+          <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #f0eeeb' }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>{editingProp ? 'Edit' : 'Add'} Property</h2>
           </div>
-        </div>
+          <form onSubmit={saveProp} style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label className="label">Property Name *</label>
+              <input className="input" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g., Oakwood Apartments" />
+            </div>
+            <div>
+              <label className="label">Address</label>
+              <input className="input" value={form.address} onChange={e => setForm({...form, address: e.target.value})} placeholder="123 Main St" />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12 }}>
+              <div><label className="label">City</label><input className="input" value={form.city} onChange={e => setForm({...form, city: e.target.value})} /></div>
+              <div><label className="label">State</label><input className="input" value={form.state} onChange={e => setForm({...form, state: e.target.value})} maxLength={2} /></div>
+              <div><label className="label">ZIP</label><input className="input" value={form.zip} onChange={e => setForm({...form, zip: e.target.value})} /></div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label className="label">Property Type</label>
+                <select className="input" value={form.property_type} onChange={e => setForm({...form, property_type: e.target.value})}>
+                  <option value="residential">Residential</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="mixed">Mixed Use</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">Allocation Method</label>
+                <select className="input" value={form.default_allocation_method} onChange={e => setForm({...form, default_allocation_method: e.target.value})}>
+                  {Object.entries(ALLOCATION_METHODS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+            </div>
+            {form.default_allocation_method === 'weighted' && (
+              <div>
+                <label className="label">Sq Ft Weight: {form.sqft_weight}% / Occupancy: {100 - form.sqft_weight}%</label>
+                <input type="range" min={10} max={90} value={form.sqft_weight} onChange={e => setForm({...form, sqft_weight: parseInt(e.target.value)})} style={{ width: '100%', accentColor: '#1a1a2e' }} />
+              </div>
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div><label className="label">Total Building Sq Ft</label><input className="input input-mono" type="number" value={form.total_sqft} onChange={e => setForm({...form, total_sqft: e.target.value})} /></div>
+              <div><label className="label">Common Area Sq Ft</label><input className="input input-mono" type="number" value={form.common_area_sqft} onChange={e => setForm({...form, common_area_sqft: e.target.value})} /></div>
+            </div>
+            <div><label className="label">Notes</label><textarea className="input" rows={2} value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} /></div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary">{editingProp ? 'Save Changes' : 'Add Property'}</button>
+            </div>
+          </form>
+        </Modal>
       )}
+
 
       {properties.length === 0 ? (
         <div className="card"><div className="empty-state">
