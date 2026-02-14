@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: '/invoices', label: 'Invoices', icon: 'I' },
   { href: '/payments', label: 'Payments', icon: '$' },
   { href: '/cam-reconciliation', label: 'CAM\nReconciliation', icon: 'C', pro: true },
+  { href: '/settings', label: 'Settings', icon: '⚙', bottom: true },
 ]
 
 export default function AppShell({ children, user, profile }) {
@@ -27,15 +28,16 @@ export default function AppShell({ children, user, profile }) {
 
   const plan = profile?.plan || 'free'
 
-  // Only show trial info for paid plans with an active trial
   const trialEndsAt = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
   const now = new Date()
   const isOnPaidTrial = plan !== 'free' && trialEndsAt && trialEndsAt > now
   const trialDaysLeft = isOnPaidTrial ? Math.ceil((trialEndsAt - now) / (1000 * 60 * 60 * 24)) : 0
 
-  // Plan display label
   const planLabel = plan === 'free' ? 'Free Plan' : plan === 'starter' ? 'Starter Plan' : 'Pro Plan'
   const planSubtext = isOnPaidTrial ? `Trial · ${trialDaysLeft}d left` : null
+
+  const mainNav = NAV_ITEMS.filter(i => !i.bottom)
+  const bottomNav = NAV_ITEMS.filter(i => i.bottom)
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#faf9f7' }}>
@@ -55,9 +57,9 @@ export default function AppShell({ children, user, profile }) {
           </div>
         </div>
 
-        {/* Nav items */}
+        {/* Main nav items */}
         <nav style={{ flex: 1, padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {NAV_ITEMS.map(item => {
+          {mainNav.map(item => {
             const isActive = pathname.startsWith(item.href)
             const isLocked = item.pro && plan !== 'pro'
             return (
@@ -85,9 +87,37 @@ export default function AppShell({ children, user, profile }) {
           })}
         </nav>
 
-        {/* Upgrade CTA - only for free plan */}
+        {/* Bottom nav (Settings) */}
+        <div style={{ padding: '0 8px 4px' }}>
+          {bottomNav.map(item => {
+            const isActive = pathname.startsWith(item.href)
+            return (
+              <a
+                key={item.href}
+                href={item.href}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+                  borderRadius: 8, fontSize: 14, fontWeight: isActive ? 600 : 400,
+                  background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  color: isActive ? 'white' : 'rgba(255,255,255,0.6)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <span style={{
+                  width: 28, height: 28, borderRadius: 6,
+                  background: isActive ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 700, color: isActive ? 'white' : 'rgba(255,255,255,0.4)',
+                }}>{item.icon}</span>
+                <span>{item.label}</span>
+              </a>
+            )
+          })}
+        </div>
+
+        {/* Upgrade CTA */}
         {plan === 'free' && (
-          <div style={{ padding: '12px 12px 8px' }}>
+          <div style={{ padding: '8px 12px' }}>
             <a href="/pricing" style={{
               display: 'block', padding: '12px 16px', background: 'rgba(232,166,53,0.15)',
               border: '1px solid rgba(232,166,53,0.3)', borderRadius: 8, textAlign: 'center',
@@ -115,7 +145,6 @@ export default function AppShell({ children, user, profile }) {
 
       {/* Main content */}
       <main style={{ flex: 1, marginLeft: 240, minWidth: 0 }}>
-        {/* Mobile header */}
         <div style={{ padding: '16px 24px', display: 'none' }}>
           <button onClick={() => setMobileOpen(true)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' }}>☰</button>
         </div>
