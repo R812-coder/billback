@@ -1,8 +1,38 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase-browser'
 import { ALLOCATION_METHODS } from '@/lib/calculations'
+
+function Modal({ children, onClose }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  if (!mounted) return null
+  return createPortal(
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+        zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 20,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 560, maxHeight: '85vh', overflow: 'auto',
+          background: 'white', borderRadius: 12, border: '1px solid #e5e2de',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        }}
+      >
+        {children}
+      </div>
+    </div>,
+    document.body
+  )
+}
 
 export default function Properties() {
   const [properties, setProperties] = useState([])
@@ -54,7 +84,6 @@ export default function Properties() {
     setShowForm(true)
   }
 
-  // Unit CRUD
   async function saveUnit(e, propertyId) {
     e.preventDefault()
     const payload = { ...unitForm, property_id: propertyId, sqft: parseFloat(unitForm.sqft) || 0, bedrooms: parseInt(unitForm.bedrooms) || 1, occupants: parseInt(unitForm.occupants) || 1 }
@@ -86,61 +115,59 @@ export default function Properties() {
         <button className="btn btn-primary" onClick={() => { setForm(emptyProp); setEditingProp(null); setShowForm(true) }}>+ Add Property</button>
       </div>
 
-      {/* Property form modal */}
+      {/* Property form modal — rendered via portal on document.body */}
       {showForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }} onClick={() => setShowForm(false)}>
-          <div style={{ width: '100%', maxWidth: 560, maxHeight: '85vh', overflow: 'auto', background: 'white', borderRadius: 12, border: '1px solid #e5e2de', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }} onClick={e => e.stopPropagation()}>
-            <div className="card-header">
-              <h2 style={{ fontSize: 18, fontWeight: 700 }}>{editingProp ? 'Edit' : 'Add'} Property</h2>
-            </div>
-            <form onSubmit={saveProp} className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div>
-                <label className="label">Property Name *</label>
-                <input className="input" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g., Oakwood Apartments" />
-              </div>
-              <div>
-                <label className="label">Address</label>
-                <input className="input" value={form.address} onChange={e => setForm({...form, address: e.target.value})} placeholder="123 Main St" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12 }}>
-                <div><label className="label">City</label><input className="input" value={form.city} onChange={e => setForm({...form, city: e.target.value})} /></div>
-                <div><label className="label">State</label><input className="input" value={form.state} onChange={e => setForm({...form, state: e.target.value})} maxLength={2} /></div>
-                <div><label className="label">ZIP</label><input className="input" value={form.zip} onChange={e => setForm({...form, zip: e.target.value})} /></div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label className="label">Property Type</label>
-                  <select className="input" value={form.property_type} onChange={e => setForm({...form, property_type: e.target.value})}>
-                    <option value="residential">Residential</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="mixed">Mixed Use</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Allocation Method</label>
-                  <select className="input" value={form.default_allocation_method} onChange={e => setForm({...form, default_allocation_method: e.target.value})}>
-                    {Object.entries(ALLOCATION_METHODS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                  </select>
-                </div>
-              </div>
-              {form.default_allocation_method === 'weighted' && (
-                <div>
-                  <label className="label">Sq Ft Weight: {form.sqft_weight}% / Occupancy: {100 - form.sqft_weight}%</label>
-                  <input type="range" min={10} max={90} value={form.sqft_weight} onChange={e => setForm({...form, sqft_weight: parseInt(e.target.value)})} style={{ width: '100%', accentColor: '#1a1a2e' }} />
-                </div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div><label className="label">Total Building Sq Ft</label><input className="input input-mono" type="number" value={form.total_sqft} onChange={e => setForm({...form, total_sqft: e.target.value})} /></div>
-                <div><label className="label">Common Area Sq Ft</label><input className="input input-mono" type="number" value={form.common_area_sqft} onChange={e => setForm({...form, common_area_sqft: e.target.value})} /></div>
-              </div>
-              <div><label className="label">Notes</label><textarea className="input" rows={2} value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} /></div>
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">{editingProp ? 'Save Changes' : 'Add Property'}</button>
-              </div>
-            </form>
+        <Modal onClose={() => setShowForm(false)}>
+          <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #f0eeeb' }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>{editingProp ? 'Edit' : 'Add'} Property</h2>
           </div>
-        </div>
+          <form onSubmit={saveProp} style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label className="label">Property Name *</label>
+              <input className="input" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g., Oakwood Apartments" />
+            </div>
+            <div>
+              <label className="label">Address</label>
+              <input className="input" value={form.address} onChange={e => setForm({...form, address: e.target.value})} placeholder="123 Main St" />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12 }}>
+              <div><label className="label">City</label><input className="input" value={form.city} onChange={e => setForm({...form, city: e.target.value})} /></div>
+              <div><label className="label">State</label><input className="input" value={form.state} onChange={e => setForm({...form, state: e.target.value})} maxLength={2} /></div>
+              <div><label className="label">ZIP</label><input className="input" value={form.zip} onChange={e => setForm({...form, zip: e.target.value})} /></div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label className="label">Property Type</label>
+                <select className="input" value={form.property_type} onChange={e => setForm({...form, property_type: e.target.value})}>
+                  <option value="residential">Residential</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="mixed">Mixed Use</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">Allocation Method</label>
+                <select className="input" value={form.default_allocation_method} onChange={e => setForm({...form, default_allocation_method: e.target.value})}>
+                  {Object.entries(ALLOCATION_METHODS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+            </div>
+            {form.default_allocation_method === 'weighted' && (
+              <div>
+                <label className="label">Sq Ft Weight: {form.sqft_weight}% / Occupancy: {100 - form.sqft_weight}%</label>
+                <input type="range" min={10} max={90} value={form.sqft_weight} onChange={e => setForm({...form, sqft_weight: parseInt(e.target.value)})} style={{ width: '100%', accentColor: '#1a1a2e' }} />
+              </div>
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div><label className="label">Total Building Sq Ft</label><input className="input input-mono" type="number" value={form.total_sqft} onChange={e => setForm({...form, total_sqft: e.target.value})} /></div>
+              <div><label className="label">Common Area Sq Ft</label><input className="input input-mono" type="number" value={form.common_area_sqft} onChange={e => setForm({...form, common_area_sqft: e.target.value})} /></div>
+            </div>
+            <div><label className="label">Notes</label><textarea className="input" rows={2} value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} /></div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary">{editingProp ? 'Save Changes' : 'Add Property'}</button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {/* Properties list */}
@@ -156,11 +183,9 @@ export default function Properties() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {properties.map(prop => (
             <div key={prop.id} className="card">
-              {/* Property header */}
               <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => setExpandedProp(expandedProp === prop.id ? null : prop.id)}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 18 }}>{prop.property_type === 'commercial' ? '🏢' : '🏠'}</span>
                     <h3 style={{ fontSize: 16, fontWeight: 700 }}>{prop.name}</h3>
                     <span className={`badge badge-${prop.property_type === 'commercial' ? 'blue' : 'green'}`}>{prop.property_type}</span>
                   </div>
@@ -172,7 +197,6 @@ export default function Properties() {
                 </div>
               </div>
 
-              {/* Expanded: units */}
               {expandedProp === prop.id && (
                 <div style={{ borderTop: '1px solid #f0eeeb' }}>
                   <div style={{ padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8f7f6' }}>
@@ -184,7 +208,6 @@ export default function Properties() {
                     </div>
                   </div>
 
-                  {/* Unit form */}
                   {unitForm && unitForm._propertyId === prop.id && (
                     <form onSubmit={e => saveUnit(e, prop.id)} style={{ padding: '16px 24px', background: '#fffdf7', borderBottom: '1px solid #f0eeeb', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, alignItems: 'end' }}>
                       <div><label className="label">Unit # *</label><input className="input" required value={unitForm.unit_number} onChange={e => setUnitForm({...unitForm, unit_number: e.target.value})} placeholder="101" /></div>
@@ -195,12 +218,11 @@ export default function Properties() {
                       <div><label className="label">People</label><input className="input input-mono" type="number" value={unitForm.occupants} onChange={e => setUnitForm({...unitForm, occupants: e.target.value})} min={0} /></div>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button type="submit" className="btn btn-primary" style={{ padding: '8px 14px', fontSize: 12 }}>Save</button>
-                        <button type="button" className="btn btn-secondary" style={{ padding: '8px 10px', fontSize: 12 }} onClick={() => setUnitForm(null)}>×</button>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '8px 10px', fontSize: 12 }} onClick={() => setUnitForm(null)}>x</button>
                       </div>
                     </form>
                   )}
 
-                  {/* Units table */}
                   {prop.units?.length > 0 ? (
                     <table className="table">
                       <thead>
