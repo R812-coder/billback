@@ -1,24 +1,28 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import { PLANS, getEffectivePlan } from '@/lib/plans'
+import { useToast, useConfirm } from '@/app/components/Toast'
 
 export default function Settings() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [form, setForm] = useState({ full_name: '', company_name: '', phone: '' })
   const [saved, setSaved] = useState(false)
   const searchParams = useSearchParams()
   const fromPortal = searchParams.get('from') === 'portal'
+  const router = useRouter()
   const supabase = createClient()
+  const toast = useToast()
+  const confirm = useConfirm()
 
   useEffect(() => {
     if (fromPortal) {
-      // Give webhook 2 seconds to process, then load
       setTimeout(() => loadProfile(), 2000)
     } else {
       loadProfile()
@@ -50,7 +54,10 @@ export default function Settings() {
       phone: form.phone || null,
     }).eq('id', profile.id)
     setSaving(false)
-    if (!error) setSaved(true)
+    if (!error) {
+      setSaved(true)
+      toast?.success('Settings saved')
+    }
   }
 
   async function openPortal() {
@@ -59,14 +66,48 @@ export default function Settings() {
       const res = await fetch('/api/stripe-portal', { method: 'POST' })
       const data = await res.json()
       if (data.error) {
-        alert(data.error)
+        toast?.error(data.error)
         setPortalLoading(false)
         return
       }
       if (data.url) window.location.href = data.url
     } catch {
-      alert('Something went wrong. Please try again.')
+      toast?.error('Something went wrong. Please try again.')
       setPortalLoading(false)
+    }
+  }
+
+  async function handleDeleteAccount() {
+    const ok = await confirm('This will permanently delete your account, all properties, units, billing history, invoices, and cancel your subscription. This cannot be undone.', {
+      title: 'Delete Your Account',
+      confirmText: 'Delete My Account',
+      danger: true,
+    })
+    if (!ok) return
+
+    // Double confirm
+    const reallyOk = await confirm('Are you absolutely sure? All your data will be permanently lost.', {
+      title: 'Final Confirmation',
+      confirmText: 'Yes, Delete Everything',
+      danger: true,
+    })
+    if (!reallyOk) return
+
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/delete-account', { method: 'POST' })
+      const data = await res.json()
+      if (data.error) {
+        toast?.error(data.error)
+        setDeleting(false)
+        return
+      }
+      // Sign out and redirect
+      await supabase.auth.signOut()
+      router.push('/?deleted=true')
+    } catch {
+      toast?.error('Something went wrong. Please try again.')
+      setDeleting(false)
     }
   }
 
@@ -84,7 +125,6 @@ export default function Settings() {
   const endsAt = profile?.subscription_ends_at ? new Date(profile.subscription_ends_at) : null
   const endsFormatted = endsAt ? endsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
 
-  // State detection
   const isCancelling = endsAt && endsAt > new Date() && profile?.plan !== 'free'
   const wasCancelled = profile?.plan === 'free' && endsAt !== null
   const dbPlanConfig = PLANS[profile?.plan] || PLANS.free
@@ -211,8 +251,8 @@ export default function Settings() {
           <p style={{ color: '#6b7280', fontSize: 13, marginBottom: 12 }}>
             Deleting your account will permanently remove all your properties, billing history, invoices, and data. This action cannot be undone.
           </p>
-          <button className="btn btn-danger" onClick={() => alert('Contact support at support@bizstackguide.com to delete your account.')}>
-            Delete Account
+          <button className="btn btn-danger" onClick={handleDeleteAccount} disabled={deleting}>
+            {deleting ? 'Deleting...' : 'Delete Account'}
           </button>
         </div>
       </div>
