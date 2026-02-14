@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import { getEffectivePlan } from '@/lib/plans'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: 'D' },
@@ -26,15 +27,11 @@ export default function AppShell({ children, user, profile }) {
     router.refresh()
   }
 
-  const plan = profile?.plan || 'free'
+  // Use effective plan — respects subscription_ends_at
+  const plan = getEffectivePlan(profile)
 
-  const trialEndsAt = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
-  const now = new Date()
-  const isOnPaidTrial = plan !== 'free' && trialEndsAt && trialEndsAt > now
-  const trialDaysLeft = isOnPaidTrial ? Math.ceil((trialEndsAt - now) / (1000 * 60 * 60 * 24)) : 0
-
+  const isCancelling = profile?.subscription_ends_at && plan !== 'free' && new Date(profile.subscription_ends_at) > new Date()
   const planLabel = plan === 'free' ? 'Free Plan' : plan === 'starter' ? 'Starter Plan' : 'Pro Plan'
-  const planSubtext = isOnPaidTrial ? `Trial · ${trialDaysLeft}d left` : null
 
   const mainNav = NAV_ITEMS.filter(i => !i.bottom)
   const bottomNav = NAV_ITEMS.filter(i => i.bottom)
@@ -53,7 +50,7 @@ export default function AppShell({ children, user, profile }) {
             <span style={{ fontFamily: "'Fraunces', serif", fontSize: 18, fontWeight: 700 }}>BillBack</span>
           </a>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-            {planLabel}{planSubtext ? ` · ${planSubtext}` : ''}
+            {planLabel}{isCancelling ? ' · Cancelling' : ''}
           </div>
         </div>
 

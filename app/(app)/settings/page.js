@@ -64,6 +64,9 @@ export default function Settings() {
 
   const plan = PLANS[profile?.plan] || PLANS.free
   const hasSub = !!profile?.stripe_subscription_id
+  const isCancelling = !!profile?.subscription_ends_at
+  const endsAt = isCancelling ? new Date(profile.subscription_ends_at) : null
+  const endsFormatted = endsAt ? endsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
 
   return (
     <div>
@@ -71,6 +74,21 @@ export default function Settings() {
         <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Settings</h1>
         <p style={{ color: '#6b7280', fontSize: 14 }}>Manage your account and subscription</p>
       </div>
+
+      {/* Cancellation banner */}
+      {isCancelling && profile?.plan !== 'free' && (
+        <div style={{ padding: '16px 20px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 10, marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#92400e', marginBottom: 2 }}>Your subscription has been cancelled</div>
+            <div style={{ fontSize: 13, color: '#a16207' }}>
+              You won't be charged again. Your {plan.name} features remain active until <strong>{endsFormatted}</strong>, then your account will switch to the Free plan.
+            </div>
+          </div>
+          <button className="btn btn-secondary" onClick={openPortal} disabled={portalLoading} style={{ flexShrink: 0 }}>
+            {portalLoading ? 'Opening...' : 'Reactivate'}
+          </button>
+        </div>
+      )}
 
       {/* Profile */}
       <div className="card" style={{ marginBottom: 24 }}>
@@ -116,14 +134,14 @@ export default function Settings() {
               <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 2 }}>{plan.name}</div>
               <div style={{ color: '#6b7280', fontSize: 13 }}>
                 {plan.price === 0 ? 'Free forever' : `$${plan.price}/month`}
+                {isCancelling && <span style={{ color: '#d97706' }}> · Cancels {endsFormatted}</span>}
               </div>
             </div>
-            <span className={`badge ${profile?.plan === 'pro' ? 'badge-blue' : profile?.plan === 'starter' ? 'badge-green' : 'badge-yellow'}`} style={{ fontSize: 13, padding: '4px 14px' }}>
-              {plan.name}
+            <span className={`badge ${isCancelling ? 'badge-yellow' : profile?.plan === 'pro' ? 'badge-blue' : profile?.plan === 'starter' ? 'badge-green' : 'badge-yellow'}`} style={{ fontSize: 13, padding: '4px 14px' }}>
+              {isCancelling ? 'Cancelling' : plan.name}
             </span>
           </div>
 
-          {/* Plan limits summary */}
           <div style={{ background: '#f8f7f6', borderRadius: 8, padding: 16, marginBottom: 20 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', marginBottom: 8, letterSpacing: '0.03em' }}>PLAN INCLUDES</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -135,7 +153,6 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Actions */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {hasSub ? (
               <button className="btn btn-secondary" onClick={openPortal} disabled={portalLoading}>
@@ -144,9 +161,9 @@ export default function Settings() {
             ) : profile?.plan === 'free' ? (
               <a href="/pricing" className="btn btn-primary" style={{ textDecoration: 'none' }}>Upgrade Plan</a>
             ) : null}
-            {hasSub && (
+            {hasSub && !isCancelling && (
               <p style={{ fontSize: 12, color: '#9ca3af', alignSelf: 'center' }}>
-                Update payment method, view invoices, or cancel your subscription through the Stripe portal.
+                Update payment method, view invoices, or cancel through the Stripe billing portal.
               </p>
             )}
           </div>

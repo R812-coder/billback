@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase-browser'
 import { ALLOCATION_METHODS } from '@/lib/calculations'
-import { PLANS } from '@/lib/plans'
+import { PLANS, getEffectivePlan } from '@/lib/plans'
 import { useToast, useConfirm } from '@/app/components/Toast'
 
 function Modal({ children, onClose }) {
@@ -59,8 +59,8 @@ export default function Properties() {
   async function loadProperties() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single()
-    if (profile) setUserPlan(profile.plan || 'free')
+    const { data: profile } = await supabase.from('profiles').select('plan, subscription_ends_at').eq('id', user.id).single()
+    if (profile) setUserPlan(getEffectivePlan(profile))
     const { data, error } = await supabase.from('properties').select('*, units(*)').order('created_at', { ascending: false })
     if (error) console.error('Load properties error:', error)
     setProperties(data || [])
