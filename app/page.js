@@ -84,8 +84,8 @@ export default function Home() {
 
       {/* ─── Nav ─── */}
       <nav style={{ maxWidth: 1000, margin: '0 auto', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <a href="/" style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, color: '#1a1a2e', display: 'flex', alignItems: 'center', gap: 6 }}>⚡ BillBack</a>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <a href="/" style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, color: '#1a1a2e', display: 'flex', alignItems: 'center', gap: 6 }}>BillBack</a>
+        <div style={{ display: 'flex', gap: 25, alignItems: 'center' }}>
           <a href="/pricing" style={{ fontSize: 14, color: '#6b7280', fontWeight: 500 }}>Pricing</a>
           <a href="/login" style={{ fontSize: 14, color: '#6b7280', fontWeight: 500 }}>Sign In</a>
           <a href="/signup" style={{ fontSize: 14, padding: '8px 18px', background: '#1a1a2e', color: 'white', borderRadius: 8, fontWeight: 600 }}>Get Started Free</a>

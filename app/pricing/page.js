@@ -60,7 +60,7 @@ export default function Pricing() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
           {Object.entries(PLANS).map(([key, plan]) => (
             <div key={key} className="card" style={{ position: 'relative', border: plan.popular ? '2px solid #1a1a2e' : undefined }}>
-              {plan.popular && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#1a1a2e', color: 'white', padding: '2px 14px', borderRadius: 12, fontSize: 11, fontWeight: 600 }}>MOST POPULAR</div>}
+              {plan.popular && <div style={{ position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)', background: '#1a1a2e', color: 'white', padding: '2px 14px', borderRadius: 12, fontSize: 11, fontWeight: 600 }}>MOST POPULAR</div>}
               <div className="card-body" style={{ padding: 28 }}>
                 <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{plan.name}</h3>
                 <p style={{ color: '#6b7280', fontSize: 13, marginBottom: 16 }}>{plan.description}</p>
@@ -82,7 +82,7 @@ export default function Pricing() {
                     disabled={loading === key}
                     onClick={() => handleUpgrade(key)}
                   >
-                    {loading === key ? 'Redirecting to checkout...' : 'Start free trial'}
+                    {loading === key ? 'Redirecting to checkout...' : 'Subscribe'}
                   </button>
                 )}
               </div>
