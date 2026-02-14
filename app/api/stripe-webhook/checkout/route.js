@@ -83,7 +83,7 @@ async function handleWebhook(request) {
 
         if (sub.cancel_at_period_end) {
           // User cancelled — plan stays active until period ends
-          const endsAt = new Date(sub.current_period_end * 1000).toISOString()
+          const endsAt = new Date((sub.cancel_at || sub.current_period_end) * 1000).toISOString()
           await supabase.from('profiles').update({
             subscription_ends_at: endsAt,
           }).eq('id', data.id)
