@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
-import { PLANS } from '@/lib/plans'
+import { PLANS, getEffectivePlan } from '@/lib/plans'
 
 export default function Settings() {
   const [profile, setProfile] = useState(null)
@@ -11,9 +12,18 @@ export default function Settings() {
   const [portalLoading, setPortalLoading] = useState(false)
   const [form, setForm] = useState({ full_name: '', company_name: '', phone: '' })
   const [saved, setSaved] = useState(false)
+  const searchParams = useSearchParams()
+  const fromPortal = searchParams.get('from') === 'portal'
   const supabase = createClient()
 
-  useEffect(() => { loadProfile() }, [])
+  useEffect(() => {
+    if (fromPortal) {
+      // Give webhook 2 seconds to process, then load
+      setTimeout(() => loadProfile(), 2000)
+    } else {
+      loadProfile()
+    }
+  }, [])
 
   async function loadProfile() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -60,13 +70,24 @@ export default function Settings() {
     }
   }
 
-  if (loading) return null
+  if (loading) {
+    return (
+      <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>
+        {fromPortal ? 'Updating your subscription...' : 'Loading...'}
+      </div>
+    )
+  }
 
-  const plan = PLANS[profile?.plan] || PLANS.free
+  const effectivePlan = getEffectivePlan(profile)
+  const planConfig = PLANS[effectivePlan] || PLANS.free
   const hasSub = !!profile?.stripe_subscription_id
-  const isCancelling = !!profile?.subscription_ends_at
-  const endsAt = isCancelling ? new Date(profile.subscription_ends_at) : null
+  const endsAt = profile?.subscription_ends_at ? new Date(profile.subscription_ends_at) : null
   const endsFormatted = endsAt ? endsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
+
+  // State detection
+  const isCancelling = endsAt && endsAt > new Date() && profile?.plan !== 'free'
+  const wasCancelled = profile?.plan === 'free' && endsAt !== null
+  const dbPlanConfig = PLANS[profile?.plan] || PLANS.free
 
   return (
     <div>
@@ -75,18 +96,29 @@ export default function Settings() {
         <p style={{ color: '#6b7280', fontSize: 14 }}>Manage your account and subscription</p>
       </div>
 
-      {/* Cancellation banner */}
-      {isCancelling && profile?.plan !== 'free' && (
-        <div style={{ padding: '16px 20px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 10, marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Banner: Cancelling but still active */}
+      {isCancelling && (
+        <div style={{ padding: '16px 20px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 10, marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
           <div>
             <div style={{ fontWeight: 700, fontSize: 14, color: '#92400e', marginBottom: 2 }}>Your subscription has been cancelled</div>
             <div style={{ fontSize: 13, color: '#a16207' }}>
-              You won't be charged again. Your {plan.name} features remain active until <strong>{endsFormatted}</strong>, then your account will switch to the Free plan.
+              You won't be charged again. Your <strong>{dbPlanConfig.name}</strong> features remain active until <strong>{endsFormatted}</strong>, then your account will switch to the Free plan.
             </div>
           </div>
           <button className="btn btn-secondary" onClick={openPortal} disabled={portalLoading} style={{ flexShrink: 0 }}>
             {portalLoading ? 'Opening...' : 'Reactivate'}
           </button>
+        </div>
+      )}
+
+      {/* Banner: Already cancelled and expired */}
+      {wasCancelled && (
+        <div style={{ padding: '16px 20px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 10, marginBottom: 24 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#166534', marginBottom: 2 }}>Your subscription has ended</div>
+          <div style={{ fontSize: 13, color: '#15803d' }}>
+            Your paid plan ended on <strong>{endsFormatted}</strong>. You won't be charged again. You're now on the Free plan.
+            {' '}<a href="/pricing" style={{ fontWeight: 600, color: '#166534' }}>Upgrade again</a> anytime to unlock all features.
+          </div>
         </div>
       )}
 
@@ -131,21 +163,21 @@ export default function Settings() {
         <div className="card-body">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 2 }}>{plan.name}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 2 }}>{planConfig.name}</div>
               <div style={{ color: '#6b7280', fontSize: 13 }}>
-                {plan.price === 0 ? 'Free forever' : `$${plan.price}/month`}
+                {planConfig.price === 0 ? 'Free forever' : `$${planConfig.price}/month`}
                 {isCancelling && <span style={{ color: '#d97706' }}> · Cancels {endsFormatted}</span>}
               </div>
             </div>
-            <span className={`badge ${isCancelling ? 'badge-yellow' : profile?.plan === 'pro' ? 'badge-blue' : profile?.plan === 'starter' ? 'badge-green' : 'badge-yellow'}`} style={{ fontSize: 13, padding: '4px 14px' }}>
-              {isCancelling ? 'Cancelling' : plan.name}
+            <span className={`badge ${isCancelling ? 'badge-yellow' : effectivePlan === 'pro' ? 'badge-blue' : effectivePlan === 'starter' ? 'badge-green' : 'badge-yellow'}`} style={{ fontSize: 13, padding: '4px 14px' }}>
+              {isCancelling ? 'Cancelling' : planConfig.name}
             </span>
           </div>
 
           <div style={{ background: '#f8f7f6', borderRadius: 8, padding: 16, marginBottom: 20 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', marginBottom: 8, letterSpacing: '0.03em' }}>PLAN INCLUDES</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              {plan.features.map((f, i) => (
+              {planConfig.features.map((f, i) => (
                 <div key={i} style={{ fontSize: 13, color: '#4b5563', display: 'flex', gap: 6 }}>
                   <span style={{ color: '#16a34a' }}>✓</span>{f}
                 </div>
@@ -158,7 +190,7 @@ export default function Settings() {
               <button className="btn btn-secondary" onClick={openPortal} disabled={portalLoading}>
                 {portalLoading ? 'Opening...' : 'Manage Subscription'}
               </button>
-            ) : profile?.plan === 'free' ? (
+            ) : effectivePlan === 'free' ? (
               <a href="/pricing" className="btn btn-primary" style={{ textDecoration: 'none' }}>Upgrade Plan</a>
             ) : null}
             {hasSub && !isCancelling && (

@@ -78,7 +78,7 @@ async function handleWebhook(request) {
 
       case 'customer.subscription.updated': {
         const sub = event.data.object
-        const { data } = await supabase.from('profiles').select('id, email').eq('stripe_subscription_id', sub.id).single()
+        const { data } = await supabase.from('profiles').select('id').eq('stripe_subscription_id', sub.id).single()
         if (!data) break
 
         if (sub.cancel_at_period_end) {
@@ -88,7 +88,7 @@ async function handleWebhook(request) {
             subscription_ends_at: endsAt,
           }).eq('id', data.id)
         } else {
-          // User reactivated or renewed — clear cancellation
+          // User reactivated — clear cancellation
           await supabase.from('profiles').update({
             subscription_ends_at: null,
           }).eq('id', data.id)
@@ -97,26 +97,29 @@ async function handleWebhook(request) {
       }
 
       case 'customer.subscription.deleted': {
-        // Subscription actually ended — downgrade to free
+        // Subscription actually ended (period over or immediate cancel)
         const sub = event.data.object
         const { data } = await supabase.from('profiles').select('id').eq('stripe_subscription_id', sub.id).single()
         if (data) {
+          // Keep subscription_ends_at so Settings can show "cancelled on [date]"
+          const endedAt = sub.ended_at
+            ? new Date(sub.ended_at * 1000).toISOString()
+            : new Date().toISOString()
+
           await supabase.from('profiles').update({
             plan: 'free',
             stripe_subscription_id: null,
-            subscription_ends_at: null,
+            subscription_ends_at: endedAt,
           }).eq('id', data.id)
         }
         break
       }
 
       case 'invoice.paid': {
-        // Successful payment — could send receipt email
         break
       }
 
       case 'invoice.payment_failed': {
-        // Payment failed — could notify user
         break
       }
     }
