@@ -4,17 +4,67 @@ import { useState, useCallback } from 'react'
 import { formatCurrency } from '@/lib/calculations'
 
 const UTILITY_TYPES = [
-  { key: 'electric', label: 'Electricity', icon: '⚡' },
-  { key: 'water', label: 'Water / Sewer', icon: '💧' },
-  { key: 'gas', label: 'Gas', icon: '🔥' },
-  { key: 'trash', label: 'Trash', icon: '♻️' },
-  { key: 'other', label: 'Other', icon: '📋' },
+  { key: 'electric', label: 'Electricity' },
+  { key: 'water', label: 'Water / Sewer' },
+  { key: 'gas', label: 'Gas' },
+  { key: 'trash', label: 'Trash' },
+  { key: 'other', label: 'Other' },
 ]
 
 const METHODS = {
   sqft: { label: 'Square Footage', desc: 'Larger units pay proportionally more' },
   occupancy: { label: 'Occupancy', desc: 'More residents = higher share' },
   weighted: { label: 'Weighted Blend', desc: 'Custom mix of sq ft + occupancy' },
+}
+
+// ─── SVG Icons (professional, 28px feature cards) ───
+const FeatureIcons = {
+  property: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 21V9l9-6 9 6v12"/><path d="M9 21V13h6v8"/>
+    </svg>
+  ),
+  calculator: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/>
+    </svg>
+  ),
+  invoice: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>
+    </svg>
+  ),
+  email: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 4 12 13 2 4"/>
+    </svg>
+  ),
+  payments: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+    </svg>
+  ),
+  cam: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-3"/><rect x="11" y="3" width="9" height="9" rx="1"/><path d="M4 15l5-5"/><path d="M15 4l5 5"/>
+    </svg>
+  ),
+}
+
+// ─── Logo ───
+function Logo({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#e8a635"/>
+          <stop offset="100%" stopColor="#d4922a"/>
+        </linearGradient>
+      </defs>
+      <rect width="32" height="32" rx="7" fill="url(#logoGrad)"/>
+      <text x="16" y="23.5" fontFamily="Georgia,serif" fontSize="20" fontWeight="700" fill="#1a1a2e" textAnchor="middle">B</text>
+    </svg>
+  )
 }
 
 function calculate(units, bills, method, sqftWeight) {
@@ -70,7 +120,16 @@ export default function Home() {
     setEmailSubmitted(true)
   }
 
-  const S = { // shared styles
+  const FEATURES = [
+    { icon: FeatureIcons.property, title: 'Property & Unit Management', desc: 'Save all your properties, units, tenants, and lease info in one place.' },
+    { icon: FeatureIcons.calculator, title: 'Automatic RUBS Calculations', desc: 'Enter your utility bills, choose allocation method, get instant per-tenant charges.' },
+    { icon: FeatureIcons.invoice, title: 'Professional PDF Invoices', desc: 'Generate clean invoices showing the breakdown. Download or email directly to tenants.' },
+    { icon: FeatureIcons.email, title: 'Email Invoices to Tenants', desc: 'Send invoices to tenants with one click. Branded emails with amount due and deadline.' },
+    { icon: FeatureIcons.payments, title: 'Payment Tracking', desc: 'Record payments by cash, check, Venmo, Zelle. See outstanding balances at a glance.' },
+    { icon: FeatureIcons.cam, title: 'CAM Reconciliation', desc: 'Year-end common area maintenance reconciliation for commercial properties.' },
+  ]
+
+  const S = {
     section: { maxWidth: 800, margin: '0 auto', padding: '0 16px' },
     card: { background: 'white', borderRadius: 12, border: '1px solid #e5e2de', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', overflow: 'hidden' },
     cardHead: { padding: '20px 24px 16px', borderBottom: '1px solid #f0eeeb' },
@@ -84,7 +143,10 @@ export default function Home() {
 
       {/* ─── Nav ─── */}
       <nav style={{ maxWidth: 1000, margin: '0 auto', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <a href="/" style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, color: '#1a1a2e', display: 'flex', alignItems: 'center', gap: 6 }}>BillBack</a>
+        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Logo size={28} />
+          <span style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, color: '#1a1a2e' }}>BillBack</span>
+        </a>
         <div style={{ display: 'flex', gap: 25, alignItems: 'center' }}>
           <a href="/pricing" style={{ fontSize: 14, color: '#6b7280', fontWeight: 500 }}>Pricing</a>
           <a href="/login" style={{ fontSize: 14, color: '#6b7280', fontWeight: 500 }}>Sign In</a>
@@ -116,16 +178,11 @@ export default function Home() {
         <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 700, textAlign: 'center', marginBottom: 8 }}>Everything you need for utility bill-backs</h2>
         <p style={{ textAlign: 'center', color: '#6b7280', fontSize: 15, marginBottom: 40 }}>Replace your spreadsheets with a purpose-built tool</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
-          {[
-            { icon: '🏢', title: 'Property & Unit Management', desc: 'Save all your properties, units, tenants, and lease info in one place.' },
-            { icon: '🧮', title: 'Automatic RUBS Calculations', desc: 'Enter your utility bills, choose allocation method, get instant per-tenant charges.' },
-            { icon: '📄', title: 'Professional PDF Invoices', desc: 'Generate clean invoices showing the breakdown. Download or email directly to tenants.' },
-            { icon: '📧', title: 'Email Invoices to Tenants', desc: 'Send invoices to tenants with one click. Branded emails with amount due and deadline.' },
-            { icon: '💰', title: 'Payment Tracking', desc: 'Record payments by cash, check, Venmo, Zelle. See outstanding balances at a glance.' },
-            { icon: '📋', title: 'CAM Reconciliation', desc: 'Year-end common area maintenance reconciliation for commercial properties.' },
-          ].map(f => (
+          {FEATURES.map(f => (
             <div key={f.title} style={{ ...S.card, padding: '24px' }}>
-              <div style={{ fontSize: 28, marginBottom: 12 }}>{f.icon}</div>
+              <div style={{ width: 44, height: 44, borderRadius: 10, background: '#f0f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                {f.icon}
+              </div>
               <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{f.title}</h3>
               <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>{f.desc}</p>
             </div>
@@ -187,7 +244,7 @@ export default function Home() {
             <div style={{ padding: '16px 16px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
               {UTILITY_TYPES.map(ut => (
                 <div key={ut.key}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 4 }}>{ut.icon} {ut.label}</label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 4 }}>{ut.label}</label>
                   <div style={{ display: 'flex', alignItems: 'center', background: '#f8f7f6', border: '1.5px solid #e5e2de', borderRadius: 8 }}>
                     <span style={{ padding: '8px 0 8px 10px', color: '#9ca3af', fontFamily: "'DM Mono', monospace" }}>$</span>
                     <input type="number" value={bills[ut.key]} onChange={e => updateBill(ut.key, e.target.value)} placeholder="0.00" style={{ flex: 1, border: 'none', background: 'transparent', padding: '8px 10px 8px 4px', fontSize: 14, fontFamily: "'DM Mono', monospace", outline: 'none', color: '#1f2937', minWidth: 0 }} />
@@ -236,7 +293,7 @@ export default function Home() {
           {calculated && results.length > 0 && (
             <div style={{ ...S.card, marginTop: 24 }}>
               <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #f0eeeb', background: 'linear-gradient(135deg, #f8fbf6, #f6f9fc)' }}>
-                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, fontFamily: "'Fraunces', serif" }}>📊 Results</h3>
+                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, fontFamily: "'Fraunces', serif" }}>Results</h3>
                 <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>{formatCurrency(totalBills)} total across {occupiedUnits.length} occupied units</p>
               </div>
               <div style={{ overflowX: 'auto' }}>
@@ -247,7 +304,7 @@ export default function Home() {
                       <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#6b7280', fontSize: 11, borderBottom: '1px solid #e5e2de' }}>TENANT</th>
                       <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: '#6b7280', fontSize: 11, borderBottom: '1px solid #e5e2de' }}>SHARE</th>
                       {UTILITY_TYPES.filter(ut => parseFloat(bills[ut.key]) > 0).map(ut => (
-                        <th key={ut.key} style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: '#6b7280', fontSize: 11, borderBottom: '1px solid #e5e2de' }}>{ut.icon}</th>
+                        <th key={ut.key} style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: '#6b7280', fontSize: 11, borderBottom: '1px solid #e5e2de' }}>{ut.label.toUpperCase()}</th>
                       ))}
                       <th style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, fontSize: 11, borderBottom: '1px solid #e5e2de' }}>TOTAL</th>
                     </tr>
@@ -319,7 +376,7 @@ export default function Home() {
             <p style={{ fontSize: 14, lineHeight: 1.7, color: '#4b5563', marginBottom: 12 }}>The property owner receives the total utility bill, then divides it proportionally. With square footage allocation, a 1,000 sq ft unit in a 10,000 sq ft building pays 10% of each bill. With occupancy-based allocation, a unit with 3 residents in a building with 30 total residents pays 10%. Many landlords use a weighted combination for the fairest distribution.</p>
             <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 18, fontWeight: 600, marginBottom: 6, marginTop: 24 }}>Is RUBS legal?</h3>
             <p style={{ fontSize: 14, lineHeight: 1.7, color: '#4b5563', marginBottom: 4 }}>RUBS legality varies significantly by state, county, and city. Some areas permit it broadly, others restrict it in rent-controlled units, and some require specific disclosure procedures.</p>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: '#9ca3af', fontStyle: 'italic', padding: '12px 16px', background: '#f8f7f6', borderRadius: 8, borderLeft: '3px solid #e8a635' }}>⚠️ This calculator provides mathematical estimates only — not legal advice. Landlord-tenant utility billing laws are hyper-local and change frequently. Always verify current requirements with your local housing authority or a qualified attorney before implementing RUBS.</p>
+            <p style={{ fontSize: 13, lineHeight: 1.6, color: '#9ca3af', fontStyle: 'italic', padding: '12px 16px', background: '#f8f7f6', borderRadius: 8, borderLeft: '3px solid #e8a635' }}>This calculator provides mathematical estimates only — not legal advice. Landlord-tenant utility billing laws are hyper-local and change frequently. Always verify current requirements with your local housing authority or a qualified attorney before implementing RUBS.</p>
           </div>
         </div>
       </div>

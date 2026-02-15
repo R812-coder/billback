@@ -7,6 +7,9 @@ export const metadata = {
   },
   description: 'Calculate and bill tenants for their share of utility costs. RUBS calculator, invoice generation, payment tracking, and CAM reconciliation for landlords and property managers.',
   keywords: 'RUBS calculator, utility bill-back, tenant utility billing, landlord software, property management utilities, CAM reconciliation',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({ children }) {
