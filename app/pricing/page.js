@@ -22,7 +22,7 @@ export default function Pricing() {
     setError('')
     setLoading(planKey)
     try {
-      const res = await fetch('/api/stripe-webhook/checkout', {
+      const res = await fetch('/api/stripe-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: planKey }),

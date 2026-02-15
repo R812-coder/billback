@@ -1,60 +1,16 @@
-import { createServerSupabase } from '@/lib/supabase-server'
-import { PLANS } from '@/lib/plans'
-
-// POST /api/stripe-webhook/checkout — Create Stripe Checkout session OR handle webhook
+// POST /api/stripe-webhook/checkout — Handle Stripe webhooks ONLY
 export async function POST(request) {
-  try {
-    // ─── Stripe Webhook (incoming from Stripe) ───
-    if (request.headers.get('stripe-signature')) {
-      return handleWebhook(request)
-    }
-
-    // ─── Create Checkout Session ───
-    const { plan } = await request.json()
-    const supabase = await createServerSupabase()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const planConfig = PLANS[plan]
-    if (!planConfig || !planConfig.stripe_price_id) {
-      return Response.json({ error: 'Invalid plan or Stripe not configured yet. Set stripe_price_id in lib/plans.js' }, { status: 400 })
-    }
-
-    const { data: profile } = await supabase.from('profiles').select('stripe_customer_id').eq('id', user.id).single()
-
-    const Stripe = (await import('stripe')).default
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-
-    let customerId = profile?.stripe_customer_id
-    if (!customerId) {
-      const customer = await stripe.customers.create({ email: user.email, metadata: { user_id: user.id } })
-      customerId = customer.id
-      await supabase.from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id)
-    }
-
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      mode: 'subscription',
-      line_items: [{ price: planConfig.stripe_price_id, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?upgraded=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing`,
-      metadata: { user_id: user.id, plan },
-    })
-
-    return Response.json({ url: session.url })
-  } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 })
-  }
-}
-
-// Handle Stripe webhooks
-async function handleWebhook(request) {
   try {
     const Stripe = (await import('stripe')).default
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
     const body = await request.text()
     const sig = request.headers.get('stripe-signature')
+
+    if (!sig) {
+      return Response.json({ error: 'Missing stripe-signature header' }, { status: 400 })
+    }
+
     const event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET)
 
     const { createClient } = await import('@supabase/supabase-js')
@@ -70,7 +26,7 @@ async function handleWebhook(request) {
             plan,
             stripe_subscription_id: session.subscription,
             stripe_customer_id: session.customer,
-            subscription_ends_at: null, // clear any previous cancellation
+            subscription_ends_at: null,
           }).eq('id', userId)
         }
         break
@@ -82,13 +38,11 @@ async function handleWebhook(request) {
         if (!data) break
 
         if (sub.cancel_at_period_end) {
-          // User cancelled — plan stays active until period ends
           const endsAt = new Date((sub.cancel_at || sub.current_period_end) * 1000).toISOString()
           await supabase.from('profiles').update({
             subscription_ends_at: endsAt,
           }).eq('id', data.id)
         } else {
-          // User reactivated — clear cancellation
           await supabase.from('profiles').update({
             subscription_ends_at: null,
           }).eq('id', data.id)
@@ -97,11 +51,9 @@ async function handleWebhook(request) {
       }
 
       case 'customer.subscription.deleted': {
-        // Subscription actually ended (period over or immediate cancel)
         const sub = event.data.object
         const { data } = await supabase.from('profiles').select('id').eq('stripe_subscription_id', sub.id).single()
         if (data) {
-          // Keep subscription_ends_at so Settings can show "cancelled on [date]"
           const endedAt = sub.ended_at
             ? new Date(sub.ended_at * 1000).toISOString()
             : new Date().toISOString()
@@ -115,17 +67,13 @@ async function handleWebhook(request) {
         break
       }
 
-      case 'invoice.paid': {
+      case 'invoice.paid':
+      case 'invoice.payment_failed':
         break
-      }
-
-      case 'invoice.payment_failed': {
-        break
-      }
     }
 
     return Response.json({ received: true })
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 400 })
+    return Response.json({ error: 'Webhook verification failed' }, { status: 400 })
   }
 }

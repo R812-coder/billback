@@ -23,7 +23,7 @@ export async function middleware(request) {
   const { pathname } = request.nextUrl
 
   // Protected routes — require auth
-  const protectedPaths = ['/dashboard', '/properties', '/billing', '/invoices', '/payments', '/cam-reconciliation']
+  const protectedPaths = ['/dashboard', '/properties', '/billing', '/invoices', '/payments', '/cam-reconciliation', '/settings', '/feedback']
   const isProtected = protectedPaths.some(p => pathname === p || pathname.startsWith(p + '/'))
 
   if (isProtected && !user) {
@@ -39,5 +39,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/properties/:path*', '/billing/:path*', '/invoices/:path*', '/payments/:path*', '/cam-reconciliation/:path*', '/login', '/signup'],
+  matcher: ['/dashboard/:path*', '/properties/:path*', '/billing/:path*', '/invoices/:path*', '/payments/:path*', '/cam-reconciliation/:path*', '/settings/:path*', '/feedback/:path*', '/login', '/signup'],
 }

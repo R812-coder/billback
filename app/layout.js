@@ -1,14 +1,34 @@
 import './globals.css'
 
 export const metadata = {
+  metadataBase: new URL('https://www.bizstackguide.com'),
   title: {
-    default: 'BillBack — Utility Bill-Back Calculator for Landlords',
+    default: 'BillBack — Free RUBS Calculator & Utility Bill-Back Platform for Landlords',
     template: '%s | BillBack',
   },
-  description: 'Calculate and bill tenants for their share of utility costs. RUBS calculator, invoice generation, payment tracking, and CAM reconciliation for landlords and property managers.',
-  keywords: 'RUBS calculator, utility bill-back, tenant utility billing, landlord software, property management utilities, CAM reconciliation',
+  description: 'Free RUBS calculator for landlords. Calculate each tenant\'s share of utility costs, generate professional invoices, email them to tenants, and track payments. No signup required.',
+  keywords: 'RUBS calculator, free RUBS calculator, utility bill-back, tenant utility billing, landlord utility billing software, ratio utility billing system, RUBS billing, property management utilities, CAM reconciliation',
   icons: {
     icon: '/favicon.svg',
+  },
+  openGraph: {
+    title: 'BillBack — Free RUBS Calculator for Landlords',
+    description: 'Calculate each tenant\'s share of utility costs instantly. Free RUBS calculator, invoice generation, and payment tracking for landlords.',
+    url: 'https://www.bizstackguide.com',
+    siteName: 'BillBack',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'BillBack — Free RUBS Calculator for Landlords',
+    description: 'Calculate each tenant\'s share of utility costs instantly. Free RUBS calculator for landlords and property managers.',
+  },
+  alternates: {
+    canonical: 'https://www.bizstackguide.com',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 }
 

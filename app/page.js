@@ -49,6 +49,7 @@ const FeatureIcons = {
       <path d="M9 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-3"/><rect x="11" y="3" width="9" height="9" rx="1"/><path d="M4 15l5-5"/><path d="M15 4l5 5"/>
     </svg>
   ),
+ 
 }
 
 // ─── Logo ───
@@ -141,6 +142,27 @@ export default function Home() {
     <div style={{ fontFamily: "'DM Sans', sans-serif", background: '#faf9f7', minHeight: '100vh' }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet" />
 
+{/* Right after the <link> for fonts */}
+<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is RUBS?", "acceptedAnswer": { "@type": "Answer", "text": "RUBS (Ratio Utility Billing System) is a method for dividing a building's total utility costs among tenants based on predetermined factors like unit size, number of occupants, or a combination of both. It's commonly used in multifamily and commercial properties where individual metering isn't feasible or cost-effective." }},
+    { "@type": "Question", "name": "How does RUBS allocation work?", "acceptedAnswer": { "@type": "Answer", "text": "The property owner receives the total utility bill, then divides it proportionally among occupied units. With square footage allocation, a 1,000 sq ft unit in a 10,000 sq ft building pays 10% of each bill. With occupancy-based allocation, a unit with 3 residents in a building with 30 total residents pays 10%." }},
+    { "@type": "Question", "name": "Is RUBS legal?", "acceptedAnswer": { "@type": "Answer", "text": "RUBS legality varies significantly by state, county, and city. Some areas permit it broadly, others restrict it in rent-controlled units, and some require specific disclosure procedures. Always verify with your local housing authority or attorney." }}
+  ]
+}) }} />
+<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "BillBack RUBS Calculator",
+  "description": "Free RUBS utility bill-back calculator for landlords.",
+  "url": "https://www.bizstackguide.com",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}) }} />
+
       {/* ─── Nav ─── */}
       <nav style={{ maxWidth: 1000, margin: '0 auto', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -148,6 +170,7 @@ export default function Home() {
           <span style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, color: '#1a1a2e' }}>BillBack</span>
         </a>
         <div style={{ display: 'flex', gap: 25, alignItems: 'center' }}>
+         <a href="/blog" style={{ fontSize: 14, color: '#6b7280', fontWeight: 500 }}>Blog</a>
           <a href="/pricing" style={{ fontSize: 14, color: '#6b7280', fontWeight: 500 }}>Pricing</a>
           <a href="/login" style={{ fontSize: 14, color: '#6b7280', fontWeight: 500 }}>Sign In</a>
           <a href="/signup" style={{ fontSize: 14, padding: '8px 18px', background: '#1a1a2e', color: 'white', borderRadius: 8, fontWeight: 600 }}>Get Started Free</a>
@@ -386,7 +409,10 @@ export default function Home() {
         <div style={{ marginBottom: 8 }}>
           <a href="/pricing" style={{ marginRight: 16 }}>Pricing</a>
           <a href="/login" style={{ marginRight: 16 }}>Sign In</a>
-          <a href="/signup">Create Account</a>
+          <a href="/signup" style={{ marginRight: 16 }}>Create Account</a>
+          <a href="/privacy" style={{ marginRight: 16 }}>Privacy</a>
+          <a href="/terms" style={{ marginRight: 16 }}>Terms</a>
+          <a href="/blog" style={{ marginRight: 16 }}>Blog</a>
         </div>
         <p>BillBack — Utility Bill-Back Platform for Landlords & Property Managers</p>
       </div>
